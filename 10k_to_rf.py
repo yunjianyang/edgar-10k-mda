@@ -100,10 +100,10 @@ class RFParser(object):
         
         # Define start & end signal for parsing
         item1_begins = [ u'\nITEM 1A.', u'\nITEM 1A –', u'\nITEM 1A:', u'\nITEM 1A ', u'\nITEM 1A\n', u'\nRISK FACTORS\n' ]
-        item1_ends   = [ u'\nITEM 1B' ]
+        item1_ends   = [ u'\nITEM 1B.', u'\nITEM 1B –', u'\nITEM 1B:', u'\nITEM 1A ', u'\nITEM 1B\n' ]
         if start != 0:
             item1_ends.append('\nITEM 1A') # Case: ITEM 1B does not exist
-        item2_begins = [ u'\nITEM 2'  ]
+        item2_begins = [ u'\nITEM 2.', u'\nITEM 2 –', u'\nITEM 2:', u'\nITEM 2 ', u'\nITEM 2\n' ]
 
         """
             Parsing code section
@@ -112,7 +112,7 @@ class RFParser(object):
 
         # Get begin
         for item1 in item1_begins:
-            begin = text.find(item1)
+            begin = text.rfind(item1)
             if debug:
                 print(item1,begin)
             if begin != -1:
@@ -120,7 +120,7 @@ class RFParser(object):
 
         if begin != -1: # Begin found
             for item1B in item1_ends:
-                end = text.find(item1B, begin+1)
+                end = text.rfind(item1B, begin+1)
                 if debug:
                     print(item1B,end)
                 if end != -1:
@@ -128,7 +128,7 @@ class RFParser(object):
 
             if end == -1: # ITEM 1B does not exist
                 for item2 in item2_begins:
-                    end = text.find(item2, begin+1)
+                    end = text.rfind(item2, begin+1)
                     if debug:
                         print(item2,end)
                     if end != -1:

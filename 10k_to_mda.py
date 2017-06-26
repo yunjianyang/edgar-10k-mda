@@ -113,7 +113,7 @@ class MDAParser(object):
 
         # Get begin
         for item7 in item7_begins:
-            begin = text.find(item7)
+            begin = text.rfind(item7)
             if debug:
                 print(item7,begin)
             if begin != -1:
@@ -121,7 +121,7 @@ class MDAParser(object):
 
         if begin != -1: # Begin found
             for item7A in item7_ends:
-                end = text.find(item7A, begin+1)
+                end = text.rfind(item7A, begin+1)
                 if debug:
                     print(item7A,end)
                 if end != -1:
@@ -129,7 +129,7 @@ class MDAParser(object):
 
             if end == -1: # ITEM 7A does not exist
                 for item8 in item8_begins:
-                    end = text.find(item8, begin+1)
+                    end = text.rfind(item8, begin+1)
                     if debug:
                         print(item8,end)
                     if end != -1:
