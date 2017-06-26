@@ -8,18 +8,18 @@ import time
 from pathos.pools import ProcessPool
 from pathos.helpers import cpu_count
 
-class MDAParser(object):
+class RFParser(object):
     def __init__(self):
         pass
 
-    def extract(self, txt_dir, mda_dir, parsing_log):
+    def extract(self, txt_dir, rf_dir, parsing_log):
         self.txt_dir = txt_dir
         if not os.path.exists(txt_dir):
             os.makedirs(txt_dir)
 
-        self.mda_dir = mda_dir
-        if not os.path.exists(mda_dir):
-            os.makedirs(mda_dir)
+        self.rf_dir = rf_dir
+        if not os.path.exists(rf_dir):
+            os.makedirs(rf_dir)
 
         def text_gen(txt_dir):
             # Yields markup & name
@@ -41,26 +41,25 @@ class MDAParser(object):
                 text = fin.read()
 
             name, ext = os.path.splitext(filename)
-            # Parse MDA part
+            # Parse Risk Factor part
+
             msg = ""
-            
-            mda, end = self.parse_mda(text)
-            
+            rf, end = self.parse_rf(text)
             # Parse second time if first parse results in index
-            if mda and len(mda.encode('utf-8')) < 1000:
-                mda, _ = self.parse_mda(text, start=end)
-            
-            if mda: # Has value
+            if rf and len(rf.encode('utf-8')) < 1000:
+                rf, _ = self.parse_rf(text, start=end)
+
+            if rf: # Has value
                 msg = "SUCCESS"
-                file_dir = os.path.join(self.mda_dir, cik)
+                file_dir = os.path.join(self.rf_dir, cik)
                 if not os.path.exists(file_dir):
                     os.makedirs(file_dir)
                 
-                mda_path = os.path.join(file_dir, name + '.mda')
-                with codecs.open(mda_path,'w', encoding='utf-8') as fout:
-                    fout.write(mda)
+                rf_path = os.path.join(file_dir, name + '.rf')
+                with codecs.open(rf_path,'w', encoding='utf-8') as fout:
+                    fout.write(rf)
             else:
-                msg = msg if mda else "MDA NOT FOUND"
+                msg = msg if rf else "RF NOT FOUND"
             #print("{},{}".format(name,msg))
             return name + '.txt', msg #
 
@@ -73,7 +72,7 @@ class MDAParser(object):
                                    text_gen(self.txt_dir) )
         _end = time.time()
 
-        print("MDA parsing time taken: {} seconds.".format(_end-_start))
+        print("RF parsing time taken: {} seconds.".format(_end-_start))
 
         # Write failed parsing list
         count = 0
@@ -86,71 +85,71 @@ class MDAParser(object):
 
         print("Number of failed text:{}".format(count))
 
-    def parse_mda(self, text, start=0):
+    def parse_rf(self, text, start=0):
         debug = False
         """
             Return Values
         """
 
-        mda = ""
+        rf = ""
         end = 0
 
         """
             Parsing Rules
         """
-
-
+        
         # Define start & end signal for parsing
-        item7_begins = [ u'\nITEM 7.', u'\nITEM 7 –', u'\nITEM 7:', u'\nITEM 7 ', u'\nITEM 7\n' ]
-        item7_ends   = [ u'\nITEM 7A' ]
+        item1_begins = [ u'\nITEM 1A.', u'\nITEM 1A –', u'\nITEM 1A:', u'\nITEM 1A ', u'\nITEM 1A\n', u'\nRISK FACTORS\n' ]
+        item1_ends   = [ u'\nITEM 1B' ]
         if start != 0:
-            item7_ends.append(u'\nITEM 7') # Case: ITEM 7A does not exist
-        item8_begins = [ u'\nITEM 8'  ]
+            item1_ends.append('\nITEM 1A') # Case: ITEM 1B does not exist
+        item2_begins = [ u'\nITEM 2'  ]
 
         """
             Parsing code section
         """
+        text = text[start:]
 
         # Get begin
-        for item7 in item7_begins:
-            begin = text.find(item7)
+        for item1 in item1_begins:
+            begin = text.find(item1)
             if debug:
-                print(item7,begin)
+                print(item1,begin)
             if begin != -1:
                 break
 
         if begin != -1: # Begin found
-            for item7A in item7_ends:
-                end = text.find(item7A, begin+1)
+            for item1B in item1_ends:
+                end = text.find(item1B, begin+1)
                 if debug:
-                    print(item7A,end)
+                    print(item1B,end)
                 if end != -1:
                     break
 
-            if end == -1: # ITEM 7A does not exist
-                for item8 in item8_begins:
-                    end = text.find(item8, begin+1)
+            if end == -1: # ITEM 1B does not exist
+                for item2 in item2_begins:
+                    end = text.find(item2, begin+1)
                     if debug:
-                        print(item8,end)
+                        print(item2,end)
                     if end != -1:
                         break
 
-            # Get MDA
+            # Get RF
             if end > begin:
-                mda = text[begin:end].strip()
+                rf = text[begin:end].strip()
             else:
                 end = 0
 
-        return mda, end
+        return rf, end
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Parse MDA section of Edgar Form 10k")
+    parser = argparse.ArgumentParser("Parse RF section of Edgar Form 10k")
     parser.add_argument('--txt_dir',type=str,default='./data/txt')
-    parser.add_argument('--mda_dir',type=str,default='./data/mda')
+    parser.add_argument('--rf_dir',type=str,default='./data/rf')
     parser.add_argument('--log_file',type=str,default='./parsing.log')
     args = parser.parse_args()
 
-    # Extract MD&A from processed text
+    # Extract Risk Factor from processed text
     # Note that the parser parses every text in the text_dir, not according to the index file
-    parser = MDAParser()
-    parser.extract(txt_dir=args.txt_dir, mda_dir=args.mda_dir, parsing_log=args.log_file)
+    parser = RFParser()
+    parser.extract(txt_dir=args.txt_dir, rf_dir=args.rf_dir, parsing_log=args.log_file)

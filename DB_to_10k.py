@@ -108,7 +108,7 @@ class Form10k(object):
                 except BaseException as e:
                     print("{} parsing failed: {}".format(url,e))
 
-        ncpus = cpu_count() if cpu_count() <= 8 else 8;
+        ncpus = cpu_count() if cpu_count() <= 8 else cpu_count() - 1;
         pool = ProcessPool( ncpus )
         pool.map( download_job,
                     iter_path_generator(df) )
