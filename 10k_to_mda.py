@@ -4,6 +4,7 @@ import argparse
 import codecs
 import os
 import time
+import re
 
 from pathos.pools import ProcessPool
 from pathos.helpers import cpu_count
@@ -52,6 +53,8 @@ class MDAParser(object):
             
             if mda: # Has value
                 msg = "SUCCESS"
+                p = re.compile('\n[0-9]{1,2}(\n|$)')
+                mda = p.sub('', mda)
                 file_dir = os.path.join(self.mda_dir, cik)
                 if not os.path.exists(file_dir):
                     os.makedirs(file_dir)
