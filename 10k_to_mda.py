@@ -55,6 +55,9 @@ class MDAParser(object):
                 msg = "SUCCESS"
                 p = re.compile('\n[0-9]{1,2}(\n|$)')
                 mda = p.sub('', mda)
+                p = re.compile('\n\n.{0,60}\n\n')
+                while len(p.findall(mda)) is not 0:
+                    mda = p.sub('\n\n', mda)
                 file_dir = os.path.join(self.mda_dir, cik)
                 if not os.path.exists(file_dir):
                     os.makedirs(file_dir)

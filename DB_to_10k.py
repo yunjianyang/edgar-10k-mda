@@ -9,7 +9,10 @@ import re
 import sys
 import unicodedata
 import re
+import bleach
 
+
+from html2text import html2text
 from sql_connect import df_from_sql
 from bs4 import BeautifulSoup
 from pathos.pools import ProcessPool
@@ -98,10 +101,17 @@ class Form10k(object):
                 r = requests.get(url)
                 try:
                     # Parse html with Beautiful Soup ’ “  ”
-                    p = re.compile('<TABLE(.*?)<\/TABLE>', re.DOTALL | re.IGNORECASE)
-                    drop_table = p.sub('', r.content)
-                    soup = BeautifulSoup(drop_table, "html.parser" )
-                    text = soup.get_text("\n")
+                    #p = re.compile('<TABLE(.*?)<\/TABLE>', re.DOTALL | re.IGNORECASE)
+                    #drop_table = p.sub('', r.content)
+                    #soup = BeautifulSoup(r.content, "html.parser" )
+                    #text = soup.findAll(text=True)
+                    #text = html2text(r.content)
+                    p = re.compile('<FILENAME>(.*?)\n')
+                    destination = p.search(r.content).group(1)
+                    filename, ext = os.path.splitext(url)
+                    final_url = os.path.join(filename.replace('-',''), destination)
+                    r = requests.get(final_url)
+                    text = bleach.clean(r.content, tags=[], strip=True)
 
                     # Process Text
                     text = self._process_text(text)
