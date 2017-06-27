@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import argparse
 import codecs
 import csv
@@ -6,6 +8,7 @@ import os
 import re
 import sys
 import unicodedata
+import re
 
 from sql_connect import df_from_sql
 from bs4 import BeautifulSoup
@@ -94,8 +97,10 @@ class Form10k(object):
 
                 r = requests.get(url)
                 try:
-                    # Parse html with Beautiful Soup
-                    soup = BeautifulSoup( r.content, "html.parser" )
+                    # Parse html with Beautiful Soup ’ “  ”
+                    p = re.compile('<TABLE(.*?)<\/TABLE>', re.DOTALL | re.IGNORECASE)
+                    drop_table = p.sub('', r.content)
+                    soup = BeautifulSoup(drop_table, "html.parser" )
                     text = soup.get_text("\n")
 
                     # Process Text
@@ -121,9 +126,9 @@ if __name__ == "__main__":
     # Download 10k forms, parse html and preprocess text
 
     sql_query = """
-    SELECT TOP 10 PERCENT *
+    SELECT *
     FROM SFMMarketData.dbo.v_sec_idx vsi 
-    WHERE FormType = '10-K' and DaTaType = 'master'
+    WHERE FormType = '10-K' and DaTaType = 'master' and YearNum > 2005
     ORDER BY vsi.CIK, vsi.YearNum
     """
 
